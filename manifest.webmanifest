@@ -1,0 +1,15 @@
+{
+  "name": "Acro English",
+  "short_name": "Acro English",
+  "description": "Inglés para dar clases de acroyoga",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F5F9",
+  "theme_color": "#2453D6",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

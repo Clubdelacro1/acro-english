@@ -1,0 +1,687 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2453D6"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Acro English">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<title>Acro English</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: sticky header with level tabs; a single reading column of phrase rows, each row = English (big) + Spanish + "cómo suena" chip + play */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --ink:#141C2B; --muted:#5A6577; --line:#DCE3EC;
+  --accent:#2453D6; --accent-ink:#FFFFFF; --sun:#FFE7A3; --sun-ink:#5B4300; --danger:#B3261E; --good:#17794A; --warn:#9A5800;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E131C; --surface:#161D29; --ink:#E9EEF6; --muted:#9AA6B8; --line:#273244;
+  --accent:#7D9BFF; --accent-ink:#0E131C; --sun:#4A3D12; --sun-ink:#FFE3A0; --danger:#FF8A80; --good:#6FD39B; --warn:#FFC266; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131C; --surface:#161D29; --ink:#E9EEF6; --muted:#9AA6B8; --line:#273244;
+  --accent:#7D9BFF; --accent-ink:#0E131C; --sun:#4A3D12; --sun-ink:#FFE3A0; --danger:#FF8A80; --good:#6FD39B; --warn:#FFC266; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 8px}
+h1{font-family:var(--display);font-weight:800;font-size:1.6rem;margin:0;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.speed{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-shrink:0}
+.speed button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.85rem;padding:6px 12px;cursor:pointer}
+.speed button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding-block:4px 10px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.tab small{color:var(--muted);margin-right:5px;font-size:.78rem;font-weight:700}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-selected="true"] small{color:inherit;opacity:.7}
+main{padding-block:18px 60px}
+.intro{color:var(--muted);margin:0 0 18px;max-width:62ch}
+h2{font-family:var(--display);font-weight:600;font-size:1.15rem;margin:26px 0 8px;text-wrap:balance}
+h2:first-of-type{margin-top:4px}
+.group-note{color:var(--muted);font-size:.9rem;margin:-4px 0 10px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .txt{min-width:0}
+.en{font-weight:700;font-size:1.08rem}
+.es{color:var(--muted);font-size:.93rem}
+.pr{display:inline-block;margin-top:4px;background:var(--sun);color:var(--sun-ink);font-style:italic;font-size:.85rem;padding:1px 8px;border-radius:6px}
+.note{font-size:.85rem;color:var(--muted);margin-top:4px}
+.actions{display:flex;gap:6px;align-items:center}
+.play,.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--accent);display:grid;place-items:center;cursor:pointer}
+.play:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.icon-btn{color:var(--muted);width:34px;height:34px}
+.icon-btn:hover{color:var(--danger)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* grammar */
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.rule h3{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:0 0 4px}
+.rule p{margin:4px 0 8px;max-width:62ch}
+.formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88rem;background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:6px 10px;display:inline-block;margin-bottom:8px}
+.rule .list{border-radius:8px}
+.when{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:700}
+/* add */
+.add{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;margin-bottom:18px}
+.add label{font-weight:700;font-size:.92rem}
+.add textarea,.add input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:700;border:0;background:var(--accent);color:var(--accent-ink);padding:10px 16px;border-radius:8px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn:disabled{opacity:.55;cursor:default}
+.status{font-size:.9rem;color:var(--muted);min-height:1.2em}
+.status.err{color:var(--danger)}
+.manual{display:grid;gap:8px}
+.empty{padding:22px 16px;color:var(--muted);text-align:center}
+.count{color:var(--muted);font-size:.85rem;font-weight:400}
+/* practice */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 20px;text-align:center;display:grid;gap:14px;justify-items:center}
+.card .q{font-family:var(--display);font-weight:600;font-size:1.5rem;text-wrap:balance}
+.card .a{font-size:1.25rem;font-weight:700;color:var(--accent)}
+.card .lab{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 11px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pr-form{display:flex;gap:8px;width:100%;max-width:480px}
+.pr-form input{flex:1;min-width:0;font:inherit;font-size:1.05rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.hint{font-size:.88rem;color:var(--muted);max-width:44ch}
+.verdict{font-family:var(--display);font-weight:600;font-size:1.2rem}
+.verdict.ok{color:var(--good)} .verdict.casi{color:var(--warn)} .verdict.no{color:var(--danger)}
+.said{color:var(--muted);font-size:.92rem}
+.miss{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:.88rem;color:var(--muted);align-items:center}
+.miss b{background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:1px 8px;border-radius:6px;font-weight:700}
+.score{font-size:.9rem;color:var(--muted);margin:0 0 10px;font-variant-numeric:tabular-nums}
+.tts-warn a{color:inherit;font-weight:700}
+.tts-warn{background:var(--sun);color:var(--sun-ink);padding:8px 12px;border-radius:8px;font-size:.9rem;margin-bottom:14px}
+/* dudas */
+.duda-btn:hover,.duda-btn.has{color:var(--accent)}
+.duda-btn.has{border-color:var(--accent)}
+.duda{padding:12px 14px;border-top:1px dashed var(--line);background:var(--bg);display:grid;gap:10px}
+.list>.duda:first-child{border-top:0}
+.duda .chips{margin:0}
+.duda-form{display:flex;gap:8px}
+.duda-form input{flex:1;min-width:0;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.duda .btn{padding:9px 14px}
+.qq{font-weight:700;font-size:.92rem;margin-top:6px}
+.aa{white-space:pre-wrap;font-size:.95rem}
+.ans:empty{display:none}
+.prev{display:grid;gap:8px}
+.qa{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.qa .qq{margin-top:0}
+/* opciones de traducción */
+.opts{display:grid;gap:10px;margin-bottom:18px}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.opt .txt{min-width:0}
+.opt .btn{padding:8px 14px}
+@media (max-width:480px){.opt{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.play{transition:background .15s,color .15s}}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>Acro <span>English</span></h1>
+      <div class="speed" role="group" aria-label="Velocidad del audio">
+        <button id="sp-slow" aria-pressed="true">Lento</button>
+        <button id="sp-norm" aria-pressed="false">Normal</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </div>
+</header>
+<main class="wrap" id="main"></main>
+
+<script>
+const PLAY='<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>';
+const QUESTION='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 18h2v-2h-2v2zm1-16a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm0-14a4 4 0 0 0-4 4h2a2 2 0 1 1 4 0c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5a4 4 0 0 0-4-4z"/></svg>';
+const QUICK=["¿Cuándo la uso?","¿Hay otra forma de decirlo?","Explicame la gramática","Dame un ejemplo en clase"];
+const TRASH='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+
+// [inglés, castellano, cómo suena]
+const NIVEL1=[
+ {t:"Los roles",items:[
+  ["base","base (el/la que sostiene)","béis"],["flyer","flyer (el/la que vuela)","fláier"],["spotter","spotter (el/la que cuida)","spóter"],
+  ["partner","compañero/a","pártner"],["teacher","profe","tícher"],["group","grupo","grup"]]},
+ {t:"El cuerpo",items:[
+  ["feet","pies","fiit"],["foot","pie","fut"],["hands","manos","jands"],["hips","caderas","jips"],["shoulders","hombros","shóulders"],
+  ["knees","rodillas","niis"],["legs","piernas","legs"],["arms","brazos","arms"],["back","espalda","bak"],["head","cabeza","jed"],
+  ["neck","cuello","nek"],["chest","pecho","chest"],["belly","panza","béli"],["core","centro / abdomen","cor"],["spine","columna","spáin"],
+  ["thighs","muslos","záis"],["ankles","tobillos","énkels"],["wrists","muñecas","rists"],["elbows","codos","élbous"],
+  ["heels","talones","jiils"],["toes","dedos del pie","tóus"]]},
+ {t:"Direcciones y espacio",items:[
+  ["up","arriba","ap"],["down","abajo","dáun"],["forward","hacia adelante","fóruerd"],["backward","hacia atrás","bákuerd"],
+  ["left","izquierda","left"],["right","derecha","ráit"],["straight","recto","stréit"],["stacked","alineado / apilado","stakt"],
+  ["balance","equilibrio","bálans"],["weight","peso","uéit"],["mat","colchoneta","mat"],["floor","piso","flor"],["circle","ronda / círculo","sérkel"]]},
+ {t:"Posturas",items:[
+  ["bird","pájaro","berd"],["front bird","pájaro de frente","frant berd"],["back bird","pájaro de espalda","bak berd"],
+  ["throne","trono","zróun"],["star","estrella","star"],["folded leaf","hoja plegada","fóulded liif"],["whale","ballena","uéil"],
+  ["candlestick","candelabro","kándelstik"],["plank","plancha","plank"],["shoulderstand","parada de hombros","shóulderstand"],
+  ["handstand","vertical / parada de manos","jándstand"],["inversion","inversión","invérshon"]]},
+ {t:"Verbos de acción",items:[
+  ["lock","trabar","lok"],["engage","activar","engéich"],["reach","estirarse hacia","riich"],["push","empujar","push"],
+  ["press","presionar","pres"],["squeeze","apretar","skuíis"],["relax","aflojar","riláks"],["breathe","respirar","bríiz"],
+  ["hold","mantener / sostener","jóuld"],["release","soltar","rilíis"],["switch","cambiar","suích"],["land","aterrizar","land"],
+  ["fall","caer","fol"],["catch","atrapar","kach"]]}
+];
+
+const NIVEL2=[
+ {t:"Posición del cuerpo",items:[
+  ["Bend your knees.","Doblá las rodillas.","bend ior niis"],["Straighten your legs.","Estirá las piernas.","stréiten ior legs"],
+  ["Lock your arms.","Trabá los brazos.","lok ior arms"],["Engage your core.","Activá el abdomen.","engéich ior cor"],
+  ["Point your toes.","Estirá las puntas de los pies.","póint ior tóus"],["Flex your feet.","Flexioná los pies.","fleks ior fiit"],
+  ["Keep your back straight.","Mantené la espalda recta.","kiip ior bak stréit"],["Relax your shoulders.","Aflojá los hombros.","riláks ior shóulders"],
+  ["Open your arms.","Abrí los brazos.","óupen ior arms"],["Squeeze your legs together.","Apretá las piernas juntas.","skuíis ior legs tuguéder"],
+  ["Stack your joints.","Alineá las articulaciones.","stak ior yóints"],["Look up.","Mirá arriba.","luk ap"],
+  ["Look at your base.","Mirá a tu base.","luk at ior béis"]]},
+ {t:"Movimiento",items:[
+  ["Lie down on your back.","Acostate boca arriba.","lái dáun on ior bak"],["Lie on your belly.","Acostate boca abajo.","lái on ior béli"],
+  ["Stand up.","Parate.","stand ap"],["Sit down.","Sentate.","sit dáun"],["Come up.","Subí.","kam ap"],
+  ["Come down slowly.","Bajá despacio.","kam dáun slóuli"],["Step forward.","Da un paso adelante.","step fóruerd"],
+  ["Step back.","Da un paso atrás.","step bak"],["Shift your weight forward.","Llevá el peso hacia adelante.","shift ior uéit fóruerd"],
+  ["Find your balance.","Buscá tu equilibrio.","fáind ior bálans"],["Push into my hands.","Empujá contra mis manos.","push íntu mai jands"],
+  ["Hands on the hips.","Manos en la cadera.","jands on de jips"],["Feet on the hips.","Pies en la cadera.","fiit on de jips"]]},
+ {t:"Respiración y ritmo",items:[
+  ["Breathe.","Respirá.","bríiz"],["Breathe in.","Inhalá.","bríiz in"],["Breathe out.","Exhalá.","bríiz áut"],
+  ["Hold it.","Mantené.","jóuld it"],["Slow down.","Más despacio.","slóu dáun"],["Take your time.","Tomate tu tiempo.","téik ior táim"],
+  ["Wait!","¡Esperá!","uéit"],["Ready?","¿Listos?","rédi"],["Let's go!","¡Vamos!","lets góu"],["One more time.","Una vez más.","uán mor táim"],
+  ["Switch roles.","Cambien de rol.","suích róuls"]]},
+ {t:"Seguridad y ánimo",items:[
+  ["Are you okay?","¿Estás bien?","ar iu oukéi"],["Spotter, stay close.","Spotter, quedate cerca.","spóter, stéi klóus"],
+  ["Talk to each other.","Comuníquense.","tok tu iich áder"],["Say \"down\" to come down.","Decí \"down\" para bajar.","séi dáun tu kam dáun"],
+  ["Don't let go.","No sueltes.","dóunt let góu"],["Let go.","Soltá.","let góu"],["Good job!","¡Muy bien!","gud yob"],
+  ["Well done!","¡Bien hecho!","uel dan"],["Nice!","¡Lindo!","náis"]]}
+];
+
+const NIVEL3=[
+ {t:"1 · Apertura",n:"Recibir al grupo y saber con quién trabajás.",items:[
+  ["Hi everyone, welcome!","¡Hola a todos, bienvenidos!","jái évriuan, uélcam"],
+  ["My name is ___ and I'm your teacher today.","Me llamo ___ y soy su profe hoy.","mai néim is ___ end áim ior tícher tudéi"],
+  ["Let's make a circle.","Hagamos una ronda.","lets méik e sérkel"],
+  ["Is this anyone's first time?","¿Alguien viene por primera vez?","is dis éniuans ferst táim"],
+  ["Does anyone have an injury?","¿Alguien tiene alguna lesión?","das éniuan jav an ínyeri"],
+  ["Today we're going to work on ___.","Hoy vamos a trabajar ___.","tudéi uír góing tu uérk on ___"]]},
+ {t:"2 · Calentamiento",n:"Entrar en calor y activar el cuerpo.",items:[
+  ["Let's warm up.","Vamos a entrar en calor.","lets uorm ap"],
+  ["Find a space on the mat.","Busquen un lugar en la colchoneta.","fáind e spéis on de mat"],
+  ["Rotate your wrists.","Girá las muñecas.","róuteit ior rists"],
+  ["Roll your shoulders back.","Girá los hombros hacia atrás.","róul ior shóulders bak"],
+  ["Stretch your legs.","Estirá las piernas.","strech ior legs"],
+  ["Let's do some core work.","Hagamos un poco de abdominales.","lets du sam cor uérk"]]},
+ {t:"3 · Armar parejas",n:"Formar grupos y repartir roles.",items:[
+  ["Find a partner.","Busquen pareja.","fáind e pártner"],
+  ["Get into groups of three.","Armen grupos de tres.","guet íntu grups of zrii"],
+  ["One base, one flyer, one spotter.","Una base, un flyer, un spotter.","uán béis, uán fláier, uán spóter"],
+  ["Who wants to fly first?","¿Quién quiere volar primero?","ju uants tu flái ferst"],
+  ["Who wants to base?","¿Quién quiere hacer de base?","ju uants tu béis"]]},
+ {t:"4 · Demostración",n:"Mostrar la postura antes de que la prueben.",items:[
+  ["Watch me first.","Mírenme primero.","uach mi ferst"],
+  ["Let me show you.","Déjenme mostrarles.","let mi shóu iu"],
+  ["Can I have a volunteer?","¿Tengo un voluntario?","ken ái jav e volantír"],
+  ["Pay attention to the hands.","Presten atención a las manos.","péi aténshon tu de jands"],
+  ["Any questions?","¿Preguntas?","éni kuéschons"]]},
+ {t:"5 · Práctica",n:"Ellos prueban, vos guiás y corregís.",items:[
+  ["Your turn!","¡Les toca!","ior tern"],
+  ["Now you try.","Ahora prueben ustedes.","náu iu trái"],
+  ["Take turns.","Túrnense.","téik terns"],
+  ["Five more breaths.","Cinco respiraciones más.","fáiv mor brezs"],
+  ["Two more minutes.","Dos minutos más.","tu mor mínits"],
+  ["Let's switch.","Cambiemos.","lets suích"]]},
+ {t:"6 · Cierre",n:"Bajar, agradecer y despedir.",items:[
+  ["Time to cool down.","Hora de aflojar.","táim tu kul dáun"],
+  ["Let's come back to the circle.","Volvamos a la ronda.","lets kam bak tu de sérkel"],
+  ["How do you feel?","¿Cómo se sienten?","jáu du iu fiil"],
+  ["Thank your partner.","Agradecé a tu compañero.","zenk ior pártner"],
+  ["Thank you for coming!","¡Gracias por venir!","zenk iu for káming"],
+  ["See you next week!","¡Nos vemos la semana que viene!","sii iu nekst uiik"]]},
+ {t:"Siempre a mano · Seguridad",n:"Frases para cuidar al grupo en cualquier momento.",items:[
+  ["Listen to your body.","Escuchá tu cuerpo.","lísen tu ior bódi"],
+  ["Don't force it.","No lo fuerces.","dóunt fors it"],
+  ["If it doesn't feel right, come down.","Si no se siente bien, bajá.","if it dásent fiil ráit, kam dáun"],
+  ["Communication is key.","La comunicación es clave.","komiunikéishon is kii"],
+  ["Safety first.","Primero la seguridad.","séifti ferst"]]}
+];
+
+const DIA=[
+ {t:"Al despertar",n:"Lo primero del día, en la casa de alguien.",items:[
+  ["Good morning!","¡Buen día!","gud mórning"],["Did you sleep well?","¿Dormiste bien?","did iu sliip uel"],
+  ["I slept really well, thanks.","Dormí muy bien, gracias.","ai slept ríli uel, zenks"],["I didn't sleep very well.","No dormí muy bien.","ai dídent sliip véri uel"],
+  ["What time is it?","¿Qué hora es?","uat táim is it"],["What time do you usually get up?","¿A qué hora te levantás normalmente?","uat táim du iu iúshuali guet ap"]]},
+ {t:"El baño",items:[
+  ["Where's the bathroom?","¿Dónde está el baño?","uérs de bázrum"],["Can I take a shower?","¿Me puedo bañar?","ken ai téik e sháuer"],
+  ["Is it okay if I shower now?","¿Está bien si me baño ahora?","is it oukéi if ai sháuer náu"],["Is there hot water?","¿Hay agua caliente?","is der jot uóter"],
+  ["How does the shower work?","¿Cómo funciona la ducha?","jáu das de sháuer uérk"],["Can I borrow a towel?","¿Me prestás una toalla?","ken ai bórou e táuel"],
+  ["There's no toilet paper.","No hay papel higiénico.","ders nóu tóilet péiper"],["The bathroom is free.","El baño está libre.","de bázrum is frii"],
+  ["I'll be quick.","Voy a ser rápido.","ail bi kuik"]]},
+ {t:"El desayuno",items:[
+  ["What's for breakfast?","¿Qué hay de desayuno?","uats for brékfast"],["Can I make some coffee?","¿Puedo hacer café?","ken ai méik sam kófi"],
+  ["Would you like tea or coffee?","¿Querés té o café?","uud iu láik tii or kófi"],["How do you take your coffee?","¿Cómo tomás el café?","jáu du iu téik ior kófi"],
+  ["With milk, no sugar.","Con leche, sin azúcar.","uiz milk, nóu shúgar"],["Where are the cups?","¿Dónde están las tazas?","uér ar de kaps"],
+  ["I'm hungry.","Tengo hambre.","áim jángri"],["I'm thirsty.","Tengo sed.","áim zérsti"],
+  ["Can I have a glass of water?","¿Me das un vaso de agua?","ken ai jav e glas of uóter"]]},
+ {t:"Preguntar por la comida",items:[
+  ["What is this?","¿Qué es esto?","uat is dis"],["What's in it?","¿Qué tiene?","uats in it"],["Does it have meat?","¿Tiene carne?","das it jav miit"],
+  ["I'm vegetarian.","Soy vegetariano.","áim veyetérian"],["I'm allergic to nuts.","Soy alérgico a los frutos secos.","áim alérchik tu nats"],
+  ["Is it spicy?","¿Pica?","is it spáisi"],["It's delicious!","¡Está riquísimo!","its delíshos"],["Can I have some more?","¿Me das un poco más?","ken ai jav sam mor"],
+  ["I'm full, thank you.","Estoy lleno, gracias.","áim ful, zenk iu"],["What are we having for dinner?","¿Qué vamos a cenar?","uat ar ui jáving for díner"],
+  ["Can I help you cook?","¿Te ayudo a cocinar?","ken ai jelp iu kuk"],["I'll do the dishes.","Yo lavo los platos.","ail du de díshes"]]},
+ {t:"La casa",items:[
+  ["Where can I leave my things?","¿Dónde dejo mis cosas?","uér ken ai liiv mai zings"],["Where do I sleep?","¿Dónde duermo?","uér du ai sliip"],
+  ["What's the wifi password?","¿Cuál es la clave del wifi?","uats de uáifai pásuerd"],["Can I charge my phone?","¿Puedo cargar el celular?","ken ai charch mai fóun"],
+  ["Can I use the kitchen?","¿Puedo usar la cocina?","ken ai iuus de kíchen"],["Can I do some laundry?","¿Puedo lavar ropa?","ken ai du sam lóndri"],
+  ["Where's the trash?","¿Dónde está la basura?","uérs de trash"],["Can I open the window?","¿Puedo abrir la ventana?","ken ai óupen de uíndou"],
+  ["It's a bit cold.","Hace un poco de frío.","its e bit kóuld"],["Do I need a key?","¿Necesito llave?","du ai niid e kii"]]},
+ {t:"Salir y volver",items:[
+  ["I'm going out.","Salgo.","áim góing áut"],["I'll be back at seven.","Vuelvo a las siete.","ail bi bak at séven"],
+  ["Do you need anything from the store?","¿Necesitás algo del almacén?","du iu niid énizing from de stor"],
+  ["What time will you be home?","¿A qué hora volvés a casa?","uat táim uil iu bi jóum"],["How do I get to the city center?","¿Cómo llego al centro?","jáu du ai guet tu de síti sénter"]]},
+ {t:"Pedir permiso y agradecer",items:[
+  ["Is it okay if I…?","¿Está bien si…?","is it oukéi if ai"],["Do you mind if I…?","¿Te molesta si…?","du iu máind if ai"],
+  ["Sorry to bother you.","Perdón que te moleste.","sóri tu báder iu"],["Thank you so much for having me.","Muchas gracias por recibirme.","zenk iu sóu mach for jáving mi"],
+  ["Make yourself at home.","Sentite como en tu casa.","méik iorsélf at jóum"],["Help yourself.","Servite lo que quieras.","jelp iorsélf"]]},
+ {t:"A la noche",items:[
+  ["I'm tired.","Estoy cansado.","áim táierd"],["I'm going to bed.","Me voy a dormir.","áim góing tu bed"],["Good night!","¡Buenas noches!","gud náit"],
+  ["Sleep well.","Que duermas bien.","sliip uel"],["See you tomorrow.","Nos vemos mañana.","sii iu tumórou"],
+  ["Can you wake me up at eight?","¿Me despertás a las ocho?","ken iu uéik mi ap at éit"]]}
+];
+
+const AMOR=[
+ {t:"1 · Romper el hielo",items:[
+  ["Hi, I'm ___.","Hola, soy ___.","jái, áim ___"],["Can I sit here?","¿Me puedo sentar acá?","ken ai sit jíer"],
+  ["Where are you from?","¿De dónde sos?","uér ar iu from"],["How long have you been doing acro?","¿Hace cuánto hacés acro?","jáu long jav iu bin dúing ákro"],
+  ["You're really good at this.","Sos muy bueno/a en esto.","iur ríli gud at dis"],["I love your energy.","Me encanta tu energía.","ai lav ior éneryi"]]},
+ {t:"2 · Conocerse",items:[
+  ["What do you do?","¿A qué te dedicás?","uat du iu du"],["What do you like to do for fun?","¿Qué te gusta hacer en tu tiempo libre?","uat du iu láik tu du for fan"],
+  ["That's so interesting!","¡Qué interesante!","dats sóu íntresting"],["Tell me more.","Contame más.","tel mi mor"],
+  ["We have a lot in common.","Tenemos mucho en común.","ui jav e lot in kómon"]]},
+ {t:"3 · Invitar",items:[
+  ["Would you like to grab a coffee?","¿Querés ir a tomar un café?","uud iu láik tu grab e kófi"],["Are you free tonight?","¿Estás libre esta noche?","ar iu frii tunáit"],
+  ["Do you want to go for a walk?","¿Querés ir a caminar?","du iu uánt tu góu for e uók"],["Can I have your number?","¿Me pasás tu número?","ken ai jav ior námber"],
+  ["What's your Instagram?","¿Cuál es tu Instagram?","uats ior ínstagram"],["Let's do this again.","Hagámoslo de nuevo.","lets du dis eguén"]]},
+ {t:"4 · Decir lo que sentís",n:"De lo más suave a lo más directo.",items:[
+  ["I had a great time tonight.","La pasé genial esta noche.","ai jad e gréit táim tunáit"],["I like spending time with you.","Me gusta pasar tiempo con vos.","ai láik spénding táim uiz iu"],
+  ["You make me laugh.","Me hacés reír.","iu méik mi laf"],["I'd love to see you again.","Me encantaría volver a verte.","áid lav tu sii iu eguén"],
+  ["I've been wanting to tell you something.","Hace rato que te quiero decir algo.","áiv bin uánting tu tel iu sámzing"],["I'm a bit nervous.","Estoy un poco nervioso/a.","áim e bit nérvos"],
+  ["I like you.","Me gustás.","ai láik iu"],["I really like you.","Me gustás mucho.","ai ríli láik iu"],
+  ["I can't stop thinking about you.","No puedo dejar de pensar en vos.","ai kant stop zínking abáut iu"],["You're beautiful.","Sos hermosa/o.","iur biútiful"]]},
+ {t:"5 · Lo que te pueden responder",items:[
+  ["I like you too.","Vos también me gustás.","ai láik iu tu"],["I feel the same.","Siento lo mismo.","ai fiil de séim"],
+  ["Let's take it slow.","Vayamos despacio.","lets téik it slóu"],["Can I think about it?","¿Lo puedo pensar?","ken ai zink abáut it"],
+  ["I'm seeing someone.","Estoy saliendo con alguien.","áim síing sámuan"],["I just want to be friends.","Solo quiero que seamos amigos.","ai yast uánt tu bi frends"]]},
+ {t:"6 · Lo que podés contestar",items:[
+  ["That makes me so happy.","Eso me pone muy feliz.","dat méiks mi sóu jápi"],["No worries, I understand.","Tranqui, entiendo.","nóu uóris, ai anderstánd"],
+  ["I'm glad I told you.","Me alegra habértelo dicho.","áim glad ai tóuld iu"],["Take your time.","Tomate tu tiempo.","téik ior táim"]]},
+ {t:"7 · Con cariño y respeto",n:"Siempre preguntar antes.",items:[
+  ["Can I hug you?","¿Te puedo abrazar?","ken ai jag iu"],["Can I kiss you?","¿Te puedo dar un beso?","ken ai kis iu"],
+  ["I miss you.","Te extraño.","ai mis iu"],["Sweet dreams.","Dulces sueños.","suiit driims"],
+  ["Text me when you get home.","Escribime cuando llegues.","tekst mi uén iu guet jóum"]]}
+];
+
+const GRAMATICA=[
+ {h:"El imperativo · dar órdenes",w:"Lo que más vas a usar",
+  p:"Es el verbo solo, sin \"you\" adelante. Sirve igual para una persona o para todo el grupo. Para decir que NO hagan algo, agregás <b>Don't</b> adelante.",
+  f:"verbo + resto  ·  Don't + verbo",
+  ex:[["Bend your knees.","Doblá las rodillas."],["Breathe.","Respirá."],["Don't let go.","No sueltes."],["Don't look down.","No mires abajo."]]},
+ {h:"Let's · proponer al grupo",w:"Para guiar la clase",
+  p:"<b>Let's</b> = \"vamos a…\" o \"hagamos…\". Te incluye a vos con el grupo. Siempre va seguido del verbo solo.",
+  f:"Let's + verbo",
+  ex:[["Let's warm up.","Vamos a entrar en calor."],["Let's make a circle.","Hagamos una ronda."],["Let's try again.","Probemos de nuevo."]]},
+ {h:"El verbo to be · ser / estar",w:"Preguntar cómo están",
+  p:"En inglés \"ser\" y \"estar\" son el mismo verbo. Cambia según la persona: <b>I am</b>, <b>you are</b>, <b>he / she / it is</b>, <b>we / they are</b>. Para preguntar, lo pasás adelante.",
+  f:"I'm · you're · he's / she's · we're · they're  —  Are you…? / Is she…?",
+  ex:[["Are you ready?","¿Están listos?"],["Is your partner okay?","¿Tu compañero está bien?"],["I'm here.","Estoy acá."],["It's your turn.","Es tu turno."]]},
+ {h:"Presente simple · explicar cómo se hace",w:"Explicar una postura",
+  p:"Para describir qué hace cada rol, en general. Con <b>he / she / it</b> (y \"the base\", \"the flyer\") el verbo lleva <b>-s</b> al final. Para preguntar usás <b>Do</b> (o <b>Does</b> con he/she/it).",
+  f:"The base holds · The flyer looks  —  Do you…? / Does it…?",
+  ex:[["The base holds the flyer.","La base sostiene al flyer."],["The flyer looks forward.","El flyer mira hacia adelante."],["The spotter stays close.","El spotter se queda cerca."],["Do you feel okay?","¿Te sentís bien?"],["Does it hurt?","¿Te duele?"]]},
+ {h:"Presente continuo · lo que pasa ahora",w:"Mientras practican",
+  p:"Para lo que está pasando en este momento. Se arma con <b>am / is / are</b> + verbo con <b>-ing</b>. Muy útil para dar ánimo y corregir en vivo.",
+  f:"am / is / are + verbo-ing",
+  ex:[["You're doing great!","¡Lo estás haciendo muy bien!"],["Your knees are bending.","Se te están doblando las rodillas."],["Is everyone breathing?","¿Todos están respirando?"],["She's coming down.","Ella está bajando."]]},
+ {h:"Can y Try · pedir con suavidad",w:"Para corregir sin presionar",
+  p:"<b>Can you…?</b> suena más amable que una orden. <b>Try to…</b> = \"intentá…\". Después de los dos va el verbo solo.",
+  f:"Can you + verbo?  ·  Try to + verbo",
+  ex:[["Can you lock your arms?","¿Podés trabar los brazos?"],["Try to keep your legs straight.","Intentá mantener las piernas rectas."],["Can I help you?","¿Te ayudo?"]]},
+ {h:"Posesivos · de quién es",w:"Para nombrar partes del cuerpo",
+  p:"En inglés las partes del cuerpo llevan dueño: no se dice \"the knees\", se dice <b>your knees</b>. <b>my</b> (mío), <b>your</b> (tuyo / de ustedes), <b>his</b> (de él), <b>her</b> (de ella), <b>their</b> (de ellos, o de una persona sin decir el género).",
+  f:"my · your · his · her · their",
+  ex:[["Hold her ankles.","Agarrale los tobillos (a ella)."],["Put your feet on his hips.","Poné los pies en la cadera de él."],["Watch their hands.","Mirá las manos de tu compañere."]]},
+ {h:"Preposiciones · dónde va cada cosa",w:"Para ubicar el cuerpo",
+  p:"<b>on</b> sobre / en · <b>under</b> debajo · <b>between</b> entre · <b>in front of</b> adelante de · <b>behind</b> detrás · <b>next to</b> al lado.",
+  f:"on · under · between · in front of · behind · next to",
+  ex:[["Feet on the hips.","Pies en la cadera."],["Stand behind the base.","Parate detrás de la base."],["Hands between the shoulders.","Manos entre los hombros."],["Stay next to the flyer.","Quedate al lado del flyer."]]},
+ {h:"Going to · lo que vamos a hacer",w:"Para anunciar el plan",
+  p:"Para contar lo que viene en la clase: <b>am / is / are + going to</b> + verbo.",
+  f:"We're going to + verbo",
+  ex:[["Today we're going to learn bird.","Hoy vamos a aprender pájaro."],["Next, we're going to switch.","Después vamos a cambiar."]]}
+];
+
+const TABS=[
+ {id:"n1",lab:"Palabras",k:"1"},{id:"n2",lab:"Órdenes",k:"2"},{id:"n3",lab:"La clase",k:"3"},
+ {id:"dia",lab:"Día a día",k:""},{id:"amor",lab:"Me gustás",k:""},
+ {id:"gr",lab:"Gramática",k:""},{id:"mis",lab:"Mis frases",k:""},{id:"dud",lab:"Mis dudas",k:""},{id:"pr",lab:"Practicar",k:""}
+];
+
+let tab="n1", slow=true, mis=[], misState="cargando", db=null, sample=null;
+let dudas=[], dudaSet=new Set(), opciones=null, copiaFecha="";
+const ONLINE="https://claude.ai/artifact/XLpbiKukiPHSntFB5vyoLW";
+const offNote=()=>`<div class="tts-warn">Estás en la versión sin conexión: esta es una copia de tus frases y dudas${copiaFecha?` del ${esc(copiaFecha)}`:""}. Para agregar frases o preguntar dudas, <a href="${ONLINE}" target="_blank" rel="noopener">abrí la versión online</a>.</div>`;
+try{ const s=localStorage.getItem("acro-tab"); if(s && TABS.some(t=>t.id===s)) tab=s; }catch(e){}
+try{ if(localStorage.getItem("acro-speed")==="norm") slow=false; }catch(e){}
+
+const hasTTS = typeof window.speechSynthesis!=="undefined" && typeof SpeechSynthesisUtterance!=="undefined";
+let voice=null;
+function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); voice=vs.find(v=>v.lang==="en-US")||vs.find(v=>v.lang&&v.lang.startsWith("en"))||null; }catch(e){} }
+if(hasTTS){ pickVoice(); try{ speechSynthesis.onvoiceschanged=pickVoice; }catch(e){} }
+function speak(t){
+  if(!hasTTS) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t.replace(/___/g,"")); u.lang="en-US"; u.rate=slow?0.7:0.95; if(voice) u.voice=voice; speechSynthesis.speak(u); }catch(e){}
+}
+
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function dudaBtn(en,es){
+  return `<button class="icon-btn duda-btn${dudaSet.has(en)?" has":""}" data-duda-en="${esc(en)}" data-duda-es="${esc(es)}" aria-label="Dudas sobre: ${esc(en)}" title="Dudas">${QUESTION}</button>`;
+}
+function row(en,es,pr,extra=""){
+  return `<div class="row"><div class="txt"><div class="en">${esc(en)}</div><div class="es">${esc(es)}</div>${pr?`<span class="pr">${esc(pr)}</span>`:""}${extra}</div>
+  <div class="actions">${dudaBtn(en,es)}${hasTTS?`<button class="play" data-say="${esc(en)}" aria-label="Escuchar: ${esc(en)}">${PLAY}</button>`:""}</div></div>`;
+}
+function groups(gs){
+  return gs.map(g=>`<h2>${esc(g.t)}</h2>${g.n?`<p class="group-note">${esc(g.n)}</p>`:""}<div class="list">${g.items.map(i=>row(i[0],i[1],i[2])).join("")}</div>`).join("");
+}
+const ttsWarn = hasTTS?"":`<div class="tts-warn">Este navegador no puede leer en voz alta. Abrí la página en Chrome o Safari para escuchar las frases.</div>`;
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML=TABS.map(t=>`<button class="tab" role="tab" id="tab-${t.id}" aria-selected="${t.id===tab}" data-tab="${t.id}">${t.k?`<small>${t.k}</small>`:""}${t.lab}${t.id==="mis"&&mis.length?` <span class="count">${mis.length}</span>`:""}${t.id==="dud"&&dudas.length?` <span class="count">${dudas.length}</span>`:""}</button>`).join("");
+}
+function render(){
+  renderTabs();
+  const m=document.getElementById("main");
+  if(tab==="n1") m.innerHTML=ttsWarn+`<p class="intro">Las palabras sueltas que vas a nombrar en cada clase. La etiqueta amarilla muestra cómo suena, escrito como lo leerías en castellano. La sílaba con tilde es la que se marca fuerte.</p>`+groups(NIVEL1);
+  else if(tab==="n2") m.innerHTML=ttsWarn+`<p class="intro">Órdenes cortas para guiar la postura. Casi todas siguen el mismo molde: <b>verbo + your + parte del cuerpo</b>.</p>`+groups(NIVEL2);
+  else if(tab==="n3") m.innerHTML=ttsWarn+`<p class="intro">La clase entera, de punta a punta, en el orden en que la vas a dar. Donde dice ___ completás con tu nombre o con la postura del día.</p>`+groups(NIVEL3);
+  else if(tab==="dia") m.innerHTML=ttsWarn+`<p class="intro">Como si estuvieras parando en la casa de alguien: todo lo que vas a necesitar preguntar, desde que te levantás hasta que te vas a dormir.</p>`+groups(DIA);
+  else if(tab==="amor") m.innerHTML=ttsWarn+`<p class="intro">Una charla para decirle a alguien que te gusta, en el orden en que suele darse: romper el hielo, conocerse, invitar y decir lo que sentís.</p>`+groups(AMOR);
+  else if(tab==="gr") m.innerHTML=ttsWarn+`<p class="intro">La gramática justa para dar una clase, toda en presente. Empezá por las dos primeras: con el imperativo y Let's ya podés guiar casi todo.</p>`+GRAMATICA.map(g=>`<div class="rule"><div class="when">${esc(g.w)}</div><h3>${esc(g.h)}</h3><p>${g.p}</p><div class="formula">${esc(g.f)}</div><div class="list">${g.ex.map(e=>row(e[0],e[1],"")).join("")}</div></div>`).join("");
+  else if(tab==="mis") renderMis(m);
+  else if(tab==="dud"){ m.innerHTML=ttsWarn+`<p class="intro">Todo lo que preguntaste queda acá. Para preguntar sobre una frase tocá el botón <b>?</b> que tiene al lado. Para una duda general, escribila abajo.</p>${misState==="copia"?offNote():`<div class="list">${dudaPanel("","")}</div>`}<h2>Guardadas</h2><div id="dud-list"></div>`; renderDudasList(); }
+  else if(tab==="pr") renderPractice(m);
+}
+
+/* ---------- Dudas ---------- */
+function dudaPanel(en,es){
+  const prev=en?dudas.filter(d=>d.en===en):[];
+  return `<div class="duda" data-en="${esc(en)}" data-es="${esc(es)}">
+    ${prev.length?`<div class="prev">${prev.map(d=>`<div class="qa"><div class="qq">${esc(d.pregunta)}</div><div class="aa">${esc(d.respuesta)}</div></div>`).join("")}</div>`:""}
+    ${en?`<div class="chips">${QUICK.map(q=>`<button type="button" class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>`:""}
+    <form class="duda-form"><input class="duda-in" ${en?"":`id="dud-in"`} aria-label="Tu duda" placeholder="${en?"Escribí tu duda sobre esta frase":"Ej: ¿cuál es la diferencia entre lie y lay?"}"><button class="btn" type="submit">Preguntar</button></form>
+    <div class="aa ans" aria-live="polite"></div>
+    <div class="status"></div>
+  </div>`;
+}
+function renderDudasList(){
+  const el=document.getElementById("dud-list"); if(!el) return;
+  let inner;
+  if(misState==="cargando") inner=`<div class="empty">Cargando tus dudas…</div>`;
+  else if(!db && misState!=="copia") inner=`<div class="empty">No se pudo conectar con el guardado. Abrí la página desde claude.ai con tu cuenta.</div>`;
+  else if(!dudas.length) inner=`<div class="empty">Todavía no tenés dudas guardadas. Tocá el botón ? al lado de cualquier frase o escribí tu duda arriba.</div>`;
+  else inner=dudas.map(d=>`<div class="row"><div class="txt">${d.en?`<div class="en">${esc(d.en)}</div><div class="es">${esc(d.es)}</div>`:""}<div class="qq">${esc(d.pregunta)}</div><div class="aa">${esc(d.respuesta)}</div></div>
+    <div class="actions">${d.en&&hasTTS?`<button class="play" data-say="${esc(d.en)}" aria-label="Escuchar">${PLAY}</button>`:""}${db?`<button class="icon-btn" data-del="${esc(d.id)}" data-col="dudas" aria-label="Borrar duda">${TRASH}</button>`:""}</div></div>`).join("");
+  el.innerHTML=`<div class="list">${inner}</div>`;
+}
+function toggleDuda(b){
+  const r=b.closest(".row"); if(!r) return;
+  const nx=r.nextElementSibling;
+  if(nx&&nx.classList.contains("duda")){ nx.remove(); return; }
+  document.querySelectorAll(".row + .duda").forEach(p=>p.remove());
+  r.insertAdjacentHTML("afterend",dudaPanel(b.dataset.dudaEn,b.dataset.dudaEs));
+  r.nextElementSibling.querySelector(".duda-in")?.focus();
+}
+async function askDuda(panel,q){
+  const ans=panel.querySelector(".ans"), st=panel.querySelector(".status");
+  st.classList.remove("err");
+  if(!sample){ st.textContent="Para preguntar dudas abrí la página desde claude.ai."; st.classList.add("err"); return; }
+  const en=panel.dataset.en, es=panel.dataset.es;
+  const btns=panel.querySelectorAll("button"); btns.forEach(x=>x.disabled=true);
+  ans.textContent=""; st.textContent="Pensando…";
+  const prompt=`Sos profe de inglés de un profesor de acroyoga argentino que está aprendiendo a dar sus clases en inglés.
+Respondé en castellano rioplatense (voseo), claro y corto (máximo 6 líneas), en texto plano, sin asteriscos ni títulos.
+Si das ejemplos en inglés, agregá entre paréntesis cómo suena escrito con letras del castellano, con tilde en la sílaba fuerte.
+${en?`Frase o palabra: "${en}" (${es})\n`:""}Duda: ${q}`;
+  try{
+    const {text}=await sample(prompt,{modelTier:"quick",onText:({text})=>{ ans.textContent=text; st.textContent=""; }});
+    ans.textContent=text;
+    if(db){ await db.collection("dudas").add({en,es,pregunta:q,respuesta:text,creado:new Date().toISOString()}); st.textContent="Guardada en Mis dudas."; }
+    const inp=panel.querySelector(".duda-in"); if(inp) inp.value="";
+  }catch(e){
+    const c=e&&e.code; if(e&&e.text) ans.textContent=e.text;
+    st.classList.add("err");
+    st.textContent=c==="not_granted"?"Necesitás permitir que la página use Claude para responder dudas."
+      :c==="rate_limited"?"Demasiadas consultas seguidas. Esperá un minuto y probá de nuevo."
+      :"No se pudo responder. Probá de nuevo en un rato.";
+  }finally{ btns.forEach(x=>x.disabled=false); }
+}
+
+/* ---------- Mis frases ---------- */
+function renderMis(m){
+  const canAsk=!!sample, canSave=!!db;
+  let list;
+  if(misState==="cargando") list=`<div class="empty">Cargando tus frases…</div>`;
+  else if(!canSave && misState!=="copia") list=`<div class="empty">No se pudo conectar con el guardado. Abrí la página desde claude.ai con tu cuenta para ver y guardar tus frases.</div>`;
+  else if(!mis.length) list=`<div class="empty">Todavía no guardaste ninguna frase. Escribí arriba algo que quieras decir en clase y va a aparecer acá.</div>`;
+  else list=mis.map(f=>`<div class="row"><div class="txt"><div class="en">${esc(f.en)}</div><div class="es">${esc(f.es)}</div>${f.pron?`<span class="pr">${esc(f.pron)}</span>`:""}${f.nota?`<div class="note">${esc(f.nota)}</div>`:""}</div>
+    <div class="actions">${dudaBtn(f.en,f.es)}${hasTTS?`<button class="play" data-say="${esc(f.en)}" aria-label="Escuchar">${PLAY}</button>`:""}${canSave?`<button class="icon-btn" data-del="${esc(f.id)}" aria-label="Borrar frase">${TRASH}</button>`:""}</div></div>`).join("");
+  const opts=opciones?`<div class="opts"><div class="when">${opciones.length>1?"Hay más de una forma · elegí cuál guardar":"Revisala antes de guardar"}</div>
+    ${opciones.map((o,i)=>`<div class="opt"><div class="txt"><div class="en">${esc(o.en)}</div><div class="es">${esc(o.es)}</div>${o.pron?`<span class="pr">${esc(o.pron)}</span>`:""}${o.nota?`<div class="note">${esc(o.nota)}</div>`:""}</div>
+    <div class="actions">${hasTTS?`<button type="button" class="play" data-say="${esc(o.en)}" aria-label="Escuchar">${PLAY}</button>`:""}<button type="button" class="btn" data-pick="${i}">Guardar</button></div></div>`).join("")}
+    <div class="btns"><button type="button" class="btn ghost" id="opts-cancel">Descartar</button></div></div>`:"";
+  m.innerHTML=ttsWarn+`<p class="intro">Tu vocabulario propio. Escribí una frase en castellano o en inglés, o preguntá "¿cómo digo…?". Claude la traduce, te dice cómo suena y queda guardada.</p>
+  ${misState==="copia"?offNote():""}<form class="add" id="ask-form" ${misState==="copia"?"hidden":""}>
+    <label for="ask-in">¿Qué querés decir?</label>
+    <textarea id="ask-in" rows="2" placeholder="Ej: apoyá bien los talones en la colchoneta"></textarea>
+    <div class="btns"><button class="btn" id="ask-btn" type="submit" ${canAsk&&canSave?"":"disabled"}>Traducir y guardar</button>
+    <button class="btn ghost" type="button" id="man-toggle" ${canSave?"":"disabled"}>Cargar a mano</button></div>
+    <div class="status" id="ask-status">${canAsk?"":"El traductor necesita abrir la página desde claude.ai. Igual podés cargar frases a mano."}</div>
+    <div class="manual" id="manual" hidden>
+      <input id="man-en" placeholder="En inglés">
+      <input id="man-es" placeholder="En castellano">
+      <input id="man-pr" placeholder="Cómo suena (opcional)">
+      <div class="btns"><button class="btn" type="button" id="man-save">Guardar</button></div>
+    </div>
+  </form>
+  ${opts}
+  <h2>Guardadas <span class="count">${mis.length||""}</span></h2>
+  <div class="list">${list}</div>`;
+}
+function setStatus(t,err){ const s=document.getElementById("ask-status"); if(s){ s.textContent=t; s.classList.toggle("err",!!err); } }
+async function saveFrase(f){
+  await db.collection("frases").add({en:f.en,es:f.es,pron:f.pron||"",nota:f.nota||"",creado:new Date().toISOString()});
+}
+async function ask(text){
+  const btn=document.getElementById("ask-btn"); btn.disabled=true; setStatus("Pensando…");
+  const prompt=`Sos profe de inglés de un profesor de acroyoga argentino que aprende a dar clases en inglés.
+Escribió esto: """${text}"""
+- Si está en castellano (o es una pregunta tipo "cómo digo..."), dale la frase en inglés natural, corta y clara, como la diría un profe en la colchoneta.
+- Si está en inglés, traducila al castellano rioplatense.
+- Si hay más de una forma natural y realmente distinta de decirlo (por ejemplo una orden corta y otra más explicativa, o dos verbos que se usan los dos), dá 2 o 3 opciones. Si hay una sola forma clara, dá una sola.
+Devolvé SOLO un objeto JSON así: {"opciones":[{"en":"...","es":"...","pron":"...","nota":"..."}]}
+"en": la frase en inglés,
+"es": la frase en castellano rioplatense (voseo),
+"pron": cómo suena el inglés escrito con letras del castellano, en minúscula, con tilde en la sílaba fuerte (ej: "bend your knees" -> "bend ior niis"),
+"nota": si hay varias opciones, en qué se diferencia esta y cuándo usarla; si hay una sola, un tip corto de gramática o "".`;
+  try{
+    const r=await sample.json(prompt,{modelTier:"quick"});
+    const ops=(Array.isArray(r&&r.opciones)?r.opciones:(r&&r.en?[r]:[])).filter(o=>o&&o.en).slice(0,3);
+    if(!ops.length) throw {code:"bad"};
+    opciones=ops; render();
+    setStatus(ops.length>1?"Encontré más de una forma de decirlo. Elegí abajo cuál guardar.":"Revisala abajo y guardala.");
+  }catch(e){
+    const c=e&&e.code;
+    setStatus(c==="not_granted"?"Necesitás permitir que la página use Claude para traducir. Mientras tanto podés cargar a mano."
+      :c==="rate_limited"?"Demasiadas consultas seguidas. Esperá un minuto y probá de nuevo."
+      :"No se pudo traducir. Probá escribirlo de otra forma o cargalo a mano.",true);
+  }finally{ const b=document.getElementById("ask-btn"); if(b) b.disabled=false; }
+}
+
+/* ---------- Practicar ---------- */
+let prSets={n1:true,n2:true,n3:true,dia:true,amor:true,mis:true}, prDir="es-en", card=null, shown=false;
+let prMode="mirar", prRes=null, score={ok:0,tot:0};
+try{ const pm=localStorage.getItem("acro-prmode"); if(["mirar","escribir","hablar"].includes(pm)) prMode=pm; }catch(e){}
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\([^)]*\)/g," ").replace(/___/g," ").replace(/['’‘`]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+function checkAnswer(said,expected){
+  const aw=norm(said).split(" ").filter(Boolean);
+  let best=null;
+  String(expected).split(/\s\/\s/).map(norm).filter(Boolean).forEach(alt=>{
+    const ew=alt.split(" "), pool=[...aw];
+    const missing=ew.filter(w=>{ const i=pool.indexOf(w); if(i>=0){ pool.splice(i,1); return false; } return true; });
+    const s=(ew.length-missing.length)/ew.length - pool.length*0.05;
+    if(!best||s>best.s) best={s,missing,exact:aw.join(" ")===alt};
+  });
+  if(!best) return {level:"no",missing:[]};
+  return {level:best.exact||best.s>=0.9?"ok":best.s>=0.6?"casi":"no",missing:best.missing};
+}
+function pool(){
+  let p=[];
+  const add=gs=>gs.forEach(g=>g.items.forEach(i=>p.push({en:i[0],es:i[1],pron:i[2]})));
+  if(prSets.n1) add(NIVEL1); if(prSets.n2) add(NIVEL2); if(prSets.n3) add(NIVEL3); if(prSets.dia) add(DIA); if(prSets.amor) add(AMOR);
+  if(prSets.mis) p=p.concat(mis);
+  return p;
+}
+function nextCard(){ const p=pool(); card=p.length?p[Math.floor(Math.random()*p.length)]:null; shown=false; prRes=null; }
+const INTRO_PR={
+  mirar:"Mirá la frase, decila en voz alta y después tocá \"Ver respuesta\" para chequear.",
+  escribir:"Escribí la respuesta y tocá \"Chequear\". No importan las mayúsculas, los acentos ni los signos.",
+  hablar:"Tocá el micrófono del teclado de tu celu y decí la frase: el teclado la escribe y la app la corrige. Si preferís, decila en voz alta y tocá \"Ver respuesta\"."
+};
+function renderPractice(m){
+  if(!card) nextCard();
+  const chip=(k,l)=>`<button class="chip" data-set="${k}" aria-pressed="${prSets[k]}">${l}</button>`;
+  const mode=(k,l)=>`<button class="chip" data-mode="${k}" aria-pressed="${prMode===k}">${l}</button>`;
+  const q=card?(prDir==="es-en"?card.es:card.en):"", a=card?(prDir==="es-en"?card.en:card.es):"";
+  const play=card&&hasTTS?`<button class="play" data-say="${esc(card.en)}" aria-label="Escuchar">${PLAY}</button>`:"";
+  const answer=card?`<div class="a">${esc(a)}</div>${card.pron?`<span class="pr">${esc(card.pron)}</span>`:""}`:"";
+  let body="";
+  if(card){
+    if(prMode==="mirar"){
+      body=`${shown?answer:""}<div class="btns" style="justify-content:center">${shown?"":`<button class="btn ghost" id="pr-show">Ver respuesta</button>`}
+        ${shown||prDir==="en-es"?play:""}<button class="btn" id="pr-next">Siguiente</button></div>`;
+    }else if(prRes){
+      const V={ok:"¡Perfecto!",casi:"¡Casi!",no:"Todavía no"};
+      body=`<div class="verdict ${prRes.level}">${V[prRes.level]}</div>
+        <div class="said">Dijiste: “${esc(prRes.said)}”</div>
+        ${prRes.level!=="ok"&&prRes.missing.length?`<div class="miss">Te faltó: ${prRes.missing.map(w=>`<b>${esc(w)}</b>`).join("")}</div>`:""}
+        ${answer}<div class="btns" style="justify-content:center">${play}<button class="btn" id="pr-next">Siguiente</button></div>`;
+    }else if(shown){
+      body=`${answer}<div class="btns" style="justify-content:center">${play}
+        <button class="btn ghost" data-self="0">Me costó</button><button class="btn" data-self="1">Me salió</button></div>`;
+    }else{
+      body=`<form class="pr-form" id="pr-form"><input id="pr-in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+          aria-label="Tu respuesta" placeholder="${prMode==="hablar"?"Tocá el micrófono del teclado y hablá":"Escribí tu respuesta"}"><button class="btn" type="submit">Chequear</button></form>
+        ${prMode==="hablar"?`<div class="hint">¿No te aparece el micrófono? Decila en voz alta igual y mirá la respuesta.</div>`:""}
+        <div class="btns" style="justify-content:center">${prDir==="en-es"?play:""}<button class="btn ghost" id="pr-show">Ver respuesta</button><button class="btn ghost" id="pr-next">Saltear</button></div>`;
+    }
+  }
+  m.innerHTML=ttsWarn+`<p class="intro">${INTRO_PR[prMode]}</p>
+  <div class="chips">${mode("mirar","Mirar")}${mode("escribir","Escribir")}${mode("hablar","Hablar")}</div>
+  <div class="chips">${chip("n1","Palabras")}${chip("n2","Órdenes")}${chip("n3","La clase")}${chip("dia","Día a día")}${chip("amor","Me gustás")}${chip("mis","Mis frases")}</div>
+  <div class="chips"><button class="chip" data-dir="es-en" aria-pressed="${prDir==="es-en"}">Castellano → inglés</button><button class="chip" data-dir="en-es" aria-pressed="${prDir==="en-es"}">Inglés → castellano</button></div>
+  ${prMode!=="mirar"&&score.tot?`<p class="score">Aciertos de hoy: ${score.ok} de ${score.tot}</p>`:""}
+  ${card?`<div class="card"><div class="lab">${prDir==="es-en"?"¿Cómo lo decís en inglés?":"¿Qué significa?"}</div><div class="q">${esc(q)}</div>${body}</div>`
+  :`<div class="card"><div class="q">Elegí al menos un grupo de frases.</div></div>`}`;
+}
+function grade(said){
+  const r=checkAnswer(said,prDir==="es-en"?card.en:card.es);
+  prRes={...r,said}; score.tot++; if(r.level==="ok") score.ok++;
+  render(); if(prDir==="es-en") speak(card.en);
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.tab){ tab=b.dataset.tab; try{localStorage.setItem("acro-tab",tab)}catch(_){}; render(); window.scrollTo(0,0); return; }
+  if(b.dataset.say){ speak(b.dataset.say); return; }
+  if(b.dataset.dudaEn!==undefined){ toggleDuda(b); return; }
+  if(b.dataset.q){ const p=b.closest(".duda"); if(p) askDuda(p,b.dataset.q); return; }
+  if(b.dataset.pick!==undefined){
+    const o=opciones&&opciones[+b.dataset.pick]; if(!o) return;
+    b.disabled=true;
+    try{ await saveFrase(o); opciones=null; render(); const i=document.getElementById("ask-in"); if(i) i.value=""; setStatus(`Guardada: ${o.en}`); }
+    catch(_){ b.disabled=false; setStatus("No se pudo guardar. Probá de nuevo en un rato.",true); }
+    return;
+  }
+  if(b.id==="opts-cancel"){ opciones=null; render(); setStatus("Descartada."); return; }
+  if(b.id==="sp-slow"||b.id==="sp-norm"){ slow=b.id==="sp-slow"; document.getElementById("sp-slow").setAttribute("aria-pressed",slow); document.getElementById("sp-norm").setAttribute("aria-pressed",!slow); try{localStorage.setItem("acro-speed",slow?"slow":"norm")}catch(_){}; return; }
+  if(b.dataset.del){
+    if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.style.color="var(--danger)"; b.setAttribute("aria-label","Tocá de nuevo para borrar"); b.title="Tocá de nuevo para borrar"; return; }
+    try{ await db.collection(b.dataset.col||"frases").doc(b.dataset.del).delete(); }catch(_){}
+    return;
+  }
+  if(b.id==="man-toggle"){ const mn=document.getElementById("manual"); mn.hidden=!mn.hidden; return; }
+  if(b.id==="man-save"){
+    const en=document.getElementById("man-en").value.trim(), es=document.getElementById("man-es").value.trim(), pr=document.getElementById("man-pr").value.trim();
+    if(!en||!es){ setStatus("Completá la frase en inglés y en castellano.",true); return; }
+    try{ await saveFrase({en,es,pron:pr}); setStatus(`Guardada: ${en}`); ["man-en","man-es","man-pr"].forEach(i=>document.getElementById(i).value=""); }
+    catch(_){ setStatus("No se pudo guardar. Probá de nuevo en un rato.",true); }
+    return;
+  }
+  if(b.dataset.set){ prSets[b.dataset.set]=!prSets[b.dataset.set]; nextCard(); render(); return; }
+  if(b.dataset.dir){ prDir=b.dataset.dir; shown=false; render(); return; }
+  if(b.id==="pr-show"){ shown=true; render(); if(prDir==="es-en"&&card) speak(card.en); return; }
+  if(b.id==="pr-next"){ nextCard(); render(); document.getElementById("pr-in")?.focus(); return; }
+  if(b.dataset.mode){ prMode=b.dataset.mode; prRes=null; shown=false; try{localStorage.setItem("acro-prmode",prMode)}catch(_){}; render(); return; }
+  if(b.dataset.self){ score.tot++; if(b.dataset.self==="1") score.ok++; nextCard(); render(); return; }
+});
+document.addEventListener("submit",e=>{
+  if(e.target.classList.contains("duda-form")){
+    e.preventDefault();
+    const q=e.target.querySelector(".duda-in").value.trim();
+    if(q) askDuda(e.target.closest(".duda"),q);
+    return;
+  }
+  if(e.target.id==="pr-form"){
+    e.preventDefault();
+    const s=document.getElementById("pr-in").value.trim();
+    if(s&&card) grade(s);
+    return;
+  }
+  if(e.target.id!=="ask-form") return;
+  e.preventDefault();
+  const t=document.getElementById("ask-in").value.trim();
+  if(!t){ setStatus("Escribí una frase primero.",true); return; }
+  if(sample&&db) ask(t);
+});
+document.getElementById("sp-slow").setAttribute("aria-pressed",slow);
+document.getElementById("sp-norm").setAttribute("aria-pressed",!slow);
+render();
+
+/* ---------- capacidades ---------- */
+(async()=>{
+  if(!window.claude||!claude.use){
+    try{
+      const g=await (await fetch("guardadas.json",{cache:"no-cache"})).json();
+      mis=g.frases||[]; dudas=g.dudas||[]; copiaFecha=g.fecha||"";
+      dudaSet=new Set(dudas.map(d=>d.en).filter(Boolean)); misState="copia";
+    }catch(e){ misState="sin"; }
+    render(); return;
+  }
+  const [d,s]=await Promise.all([claude.use("db").catch(()=>null),claude.use("sample").catch(()=>null)]);
+  db=d; sample=s;
+  if(!db){ misState="sin"; render(); return; }
+  db.collection("frases").orderBy("creado","desc").onSnapshot(snap=>{
+    mis=snap.docs.map(x=>({id:x.id,...x.data()}));
+    misState="ok";
+    if(tab==="mis"){ const st=document.getElementById("ask-status")?.textContent, inp=document.getElementById("ask-in")?.value; render(); if(st) setStatus(st); if(inp) document.getElementById("ask-in").value=inp; }
+    else renderTabs();
+  },()=>{ misState="sin"; render(); });
+  db.collection("dudas").orderBy("creado","desc").onSnapshot(snap=>{
+    dudas=snap.docs.map(x=>({id:x.id,...x.data()}));
+    dudaSet=new Set(dudas.map(d=>d.en).filter(Boolean));
+    document.querySelectorAll("[data-duda-en]").forEach(b=>b.classList.toggle("has",dudaSet.has(b.dataset.dudaEn)));
+    renderTabs(); renderDudasList();
+  },()=>{});
+  if(tab==="mis"||tab==="dud") render();
+})();
+</script>
+
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body></html>
